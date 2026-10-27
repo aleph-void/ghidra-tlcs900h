@@ -4,20 +4,36 @@ Ghidra processor module for Toshiba TLCS-900/H.
 
 Tested with version 10.3.2.
 
+> **Ghidra-Rare fork:** this fork builds and is tested with Ghidra 12.1.3, 12.1.4 and 12.2. Prebuilt extension zips are
+> on the fork's Releases page; verification results, remaining gaps and the test suite are in
+> [GHIDRA-RARE.md](GHIDRA-RARE.md), and the changes against this repository are listed in [CREDITS.md](CREDITS.md).
+
 ## Status
 
 Work in progress:
 
 * Instruction set should be fully disassembled, if you notice anything missing, please open an issue / pull request!
+    * Ghidra-Rare: decode now agrees with MAME's unidasm on 762,811 test slots (every difference is in an explained
+      class) and every decoded slot reassembles with asl; see GHIDRA-RARE.md.
     * Note: Disassemblers usually disagree on presentation / ambiguity:
         * Disabled interrupts: `di` vs. `ei 0x07`;
         * Mnemonic qualifiers for word/long sized operands: `sll` vs. `sllw`;
         * Flag shown for conditional instructions: `jp NZ,XWA` vs. `jp NE,XWA`;
         * Destination register shown when result storage space is larger than loaded values: `mul A,(XWA)` vs. `mul WA,(XWA)`;
         * Accepting decoding of extra cases that aren't documented: `ldir` and `ldirw` can be decoded with 5 other combinations of bits 0..2;
+          (Ghidra-Rare: the module now follows the manual and decodes only the 83+zz and 85+zz forms.)
 * Semantics are mostly done, and are now being thoroughly tested through pcode emulation.
+    * Ghidra-Rare: semantics were rewritten from the manual where they were wrong (memory operand sizes, block
+      transfers, bit operations, rotates, bank registers, flags) and are checked by hand-computed emulator cases.
 
 ## Usage
+
+Ghidra-Rare fork: install the extension zip for your Ghidra version from the fork's Releases page (File > Install
+Extensions), or build it with `GHIDRA_INSTALL_DIR=... gradle buildExtension`. For Neo Geo Pocket cartridges, import the
+image as a raw binary with language `TLCS900H:LE:32:default` and base address `0x200000`, then run
+`NeoGeoPocketCartridge.java` (Analysis > TLCS900H) before auto-analysis.
+
+Original instructions (copying the source tree into the Ghidra installation):
 
 ```sh
 GHIDRA_INSTALL_DIR=#FIXME
@@ -220,3 +236,6 @@ So far so good, now let's look at how they get included in an instruction:
 ![](ins.png)
 
 Usually, variable length tokens like `r32b_eam` sit at the tail end of an instruction, but here, they happen to be in the middle, followed by `0x38` + an 8/16-bit immediate value `imm8/imm16`. SLEIGH expects variable tokens at the end of an instruction, which means that constructors had to be duplicated for each addressing mode with a distinct length. TODO: Could context vars avoid this duplication?
+
+(Ghidra-Rare: the duplication remains, since SLEIGH cannot constrain bytes behind a variable-length operand, but it is
+now generated: `tools/gen/` writes one subtable per addressing form and repeats the instructions per form.)

@@ -1,0 +1,64 @@
+add_word_carry_zero|add wa,0edcch|WA=1234,F=0|WA=0,F=51
+add_byte_overflow|add a,7fh|WA=1,F=0|A=80,F=94
+adc_carry_in|adc a,0|WA=ff,F=1|A=0,F=51
+sub_borrow|sub a,1|WA=0,F=0|A=ff,F=93
+sbc_overflow|sbc a,0|WA=80,F=1|A=7f,F=16
+cp_equal_keeps_a|cp a,5|WA=5,F=0|A=5,F=42
+inc_byte_overflow_keeps_c|inc 1,a|WA=7f,F=1|A=80,F=95
+inc_word_8_no_flags|inc 8,wa|WA=ffff,F=0|WA=7,F=0
+dec_mem_byte_to_zero|dec 1,(xwa)|XWA=2000,n1:2000=1,F=0|n1:2000=0,F=42
+and_parity_h|and a,0fh|WA=3c,F=1|A=c,F=14
+xor_self|xor a,a|WA=55,F=0|A=0,F=44
+rlc_1|rlc 1,a|WA=81,F=0|A=3,F=5
+rl_4_through_carry|rl 4,a|WA=12,F=1|A=28,F=5
+sra_3|sra 3,b|XBC=8100,F=0|B=f0,F=84
+sll_16_count_zero|sll 16,wa|WA=8001,F=0|WA=0,F=45
+srl_by_a|srl a,bc|WA=4,XBC=81f0,F=0|BC=81f,F=4
+mul_byte_rr|mul wa,c|WA=ab10,XBC=0f,F=0|WA=f0
+muls_word_negative|muls xwa,bc|XWA=1234fffe,XBC=3|XWA=fffffffa
+div_byte|div wa,c|WA=107,XBC=10,F=0|WA=710,F=0
+div_by_zero_sets_v|div wa,c|WA=107,XBC=0,F=0|WA=107,F=4
+divs_word_negative|divs xwa,bc|XWA=fffffff9,XBC=2,F=0|XWA=fffffffd,F=0
+ld_postinc_byte|ld b,(xwa+)|XWA=2000,n1:2000=5a|B=5a,XWA=2001
+ld_predec_word|ld (-xbc),wa|XBC=2002,WA=beef|XBC=2000,n2:2000=beef
+ld_index_signed_r8|ld b,(xix+a)|XIX=2010,WA=f0,n1:2000=77|B=77
+ld_index_d16_negative|ld a,(xix-100h)|XIX=2100,n1:2000=66|A=66
+ld_index_r16|ld a,(xix+bc)|XIX=2000,XBC=fff0,n1:1ff0=44|A=44
+ldir_three|ldir (xde+),(xhl+)|XHL=2000,XDE=2100,XBC=3,n4:2000=00332211|n4:2100=00332211,BC=0,XHL=2003,XDE=2103,F=0
+cpir_stops_on_match|cpir a,(xhl+)|WA=22,XHL=2000,XBC=5,n4:2000=00332211,F=0|XHL=2002,BC=3,F=46
+cpd_word_postdec|cpd wa,(xix-)|WA=1234,XIX=2002,XBC=2,n2:2002=1234,F=0|XIX=2000,BC=1,F=46
+push_pop|push wa\n pop bc|XSP=3000,WA=1357|BC=1357,XSP=3000
+calr_ret|calr sub\n jr done\nsub: ld a,5\n ret\ndone:|XSP=3000,WA=0|A=5,XSP=3000
+djnz_loop|ld a,0\n ld b,3\nlp: inc 1,a\n djnz b,lp|XBC=0|A=3,B=0
+jr_taken|cp a,1\n jr z,skip\n ld a,9\nskip:|WA=1,F=0|A=1
+jr_not_taken|cp a,2\n jr z,skip\n ld a,9\nskip:|WA=1,F=0|A=9
+ldf_bank_switch|ldf 1\n ld xwa,22222222h\n ldf 0|XWA=11111111,SR=0|XWA=11111111,XWA_1=22222222
+explicit_bank_read|ldf 1\n ld xwa,22222222h\n ldf 0\n ld xbc,xwa1|XWA=11111111,SR=0|XBC=22222222
+explicit_current_bank_write|ld xwa0,33333333h|XWA=0,SR=0|XWA=33333333
+ex_f_f2|ex f,f'|F=c3,F_I=12|F=12,F_I=c3
+stcf_clear_and_chg|stcf 3,a\n chg 0,a|WA=ff,F=0|A=f6
+bit_sets_z_from_bit|bit 7,a|WA=7f,F=0|F=50
+daa_after_add|add a,1\n daa a|WA=9,F=0|A=10
+minc1_wraps|minc1 8,wa|WA=1237,F=0|WA=1230
+mdec2_wraps|mdec2 8,wa|WA=1230,F=0|WA=1236
+mula_accumulates|mula xwa|XWA=a,XDE=2000,XHL=2002,n2:2000=3,n2:2002=fffe,F=0|XWA=4,XHL=2000
+bs1f_found|bs1f a,bc|XBC=10,F=4|A=4,F=0
+bs1b_none|bs1b a,bc|XBC=0,F=0|F=4
+link_unlk|link xix,-4\n unlk xix|XSP=3000,XIX=12345678|XIX=12345678,XSP=3000
+link_frame|link xix,-4|XSP=3000,XIX=12345678|XIX=2ffc,XSP=2ff8,n4:2ffc=12345678
+retd|calr sub\n jr done\nsub: retd 4\ndone:|XSP=3000|XSP=3004
+lda_effective|lda xiy,xix+10h|XIX=2000|XIY=2010
+ldar_pc_relative|ldar xwa,$+20h|XWA=0|XWA=@20
+extz_exts|ld wa,0ff80h\n exts xwa|XWA=0|XWA=ffffff80
+scc_word|cp a,1\n scc z,bc|WA=1,XBC=ffff,F=0|BC=1
+neg_word|neg wa|WA=2,F=0|WA=fffe,F=93
+rrd_mem|rrd a,(xhl)|WA=12,XHL=2000,n1:2000=34,F=0|A=14,n1:2000=23
+incf_decf_banks|incf\n ld xwa,22222222h\n decf|XWA=11111111,SR=0|XWA=11111111,XWA_1=22222222,SR=0
+pop_sr_switches_bank|pop sr|XSP=3000,n2:3000=0100,XWA_1=44444444,XWA=11,SR=0|XWA=44444444,XWA_0=11,SR=100,XSP=3002
+reti_restores_sr_and_pc|reti|XSP=3000,n2:3000=00c5,n4:3002=@1,SR=0,INTNEST=2|F=c5,XSP=3006,INTNEST=1
+ldx_direct|ldx (12h),34h|n1:0012=0|n1:0012=34
+ldc_to_dma|ldc dmas0,xwa|XWA=123456|DMAS_0=123456
+cpl_byte|cpl a|WA=5a,F=0|A=a5,F=12
+rld_mem|rld a,(xhl)|WA=12,XHL=2000,n1:2000=34,F=0|A=13,n1:2000=42
+push_pop_f|push f\n pop a|XSP=3000,F=c3|A=c3,XSP=3000
+XFAIL_add_wrong_carry|add a,1|WA=ff,F=0|A=0,F=40
