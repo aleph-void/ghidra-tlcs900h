@@ -1,0 +1,218 @@
+
+# ---------------------------------------------------------------------------------------------
+# Operation macros (manual: Appendix B Instruction Lists, flag columns SZHVNC)
+# ---------------------------------------------------------------------------------------------
+
+macro resSZ(r) {
+    $(S_flag) = r s< 0;
+    $(Z_flag) = r == 0;
+}
+macro parityV(r) {
+    local pc:1 = popcount(r);
+    $(V_flag) = (pc & 1) == 0;
+}
+# ADD/ADC: S Z H V, N=0, C
+macro addf(a, b, cin, dst) {
+    local c = a;
+    c = zext($(C_flag) & cin);
+    local r = a + b + c;
+    $(H_flag) = ((a ^ b ^ r) & 0x10) != 0;
+    $(V_flag) = ((a ^ r) & (b ^ r)) s< 0;
+    $(C_flag) = carry(a, b) || carry(a + b, c);
+    $(N_flag) = 0;
+    resSZ(r);
+    dst = r;
+}
+# SUB/SBC/CP/NEG: S Z H V, N=1, C (borrow)
+macro subf(a, b, cin, dst) {
+    local c = a;
+    c = zext($(C_flag) & cin);
+    local r = a - b - c;
+    $(H_flag) = ((a ^ b ^ r) & 0x10) != 0;
+    $(V_flag) = ((a ^ b) & (a ^ r)) s< 0;
+    $(C_flag) = (a < b) || ((a - b) < c);
+    $(N_flag) = 1;
+    resSZ(r);
+    dst = r;
+}
+# INC/DEC #3 on a byte register or on memory: C unchanged
+macro incf(a, n) {
+    local r = a + n;
+    $(H_flag) = ((a ^ n ^ r) & 0x10) != 0;
+    $(V_flag) = ((a ^ r) & (n ^ r)) s< 0;
+    $(N_flag) = 0;
+    resSZ(r);
+    a = r;
+}
+macro decf(a, n) {
+    local r = a - n;
+    $(H_flag) = ((a ^ n ^ r) & 0x10) != 0;
+    $(V_flag) = ((a ^ n) & (a ^ r)) s< 0;
+    $(N_flag) = 1;
+    resSZ(r);
+    a = r;
+}
+# AND: H=1; OR/XOR: H=0; V=parity, N=0, C=0
+macro logf(r, h) {
+    resSZ(r);
+    parityV(r);
+    local hh:1 = h;
+    $(H_flag) = hh;
+    $(N_flag) = 0;
+    $(C_flag) = 0;
+}
+
+# shifts and rotates: S Z, H=0, V=parity, N=0, C. n = count (1..16), w = operand width in bits
+macro shf(r) {
+    resSZ(r);
+    parityV(r);
+    $(H_flag) = 0;
+    $(N_flag) = 0;
+}
+macro rlc_(d, n, w) {
+    local m = n % w;
+    d = (d << m) | (d >> (w - m));
+    $(C_flag) = (d & 1) != 0;
+    shf(d);
+}
+macro rrc_(d, n, w) {
+    local m = n % w;
+    d = (d >> m) | (d << (w - m));
+    $(C_flag) = d s< 0;
+    shf(d);
+}
+macro rl_(d, n, w) {
+    local m:1 = n % (w + 1);
+    if (m == 0) goto <none>;
+    local cy = d;
+    cy = zext($(C_flag));
+    local o = d;
+    d = (o << m) | (cy << (m - 1)) | (o >> (w + 1 - m));
+    $(C_flag) = ((o >> (w - m)) & 1) != 0;
+<none>
+    shf(d);
+}
+macro rr_(d, n, w) {
+    local m:1 = n % (w + 1);
+    if (m == 0) goto <none>;
+    local cy = d;
+    cy = zext($(C_flag));
+    local o = d;
+    d = (o >> m) | (cy << (w - m)) | (o << (w + 1 - m));
+    $(C_flag) = ((o >> (m - 1)) & 1) != 0;
+<none>
+    shf(d);
+}
+macro sla_(d, n, w) {
+    $(C_flag) = 0;
+    if (n > w) goto <big>;
+    $(C_flag) = ((d >> (w - n)) & 1) != 0;
+<big>
+    d = d << n;
+    shf(d);
+}
+macro sra_(d, n) {
+    $(C_flag) = ((d s>> (n - 1)) & 1) != 0;
+    d = d s>> n;
+    shf(d);
+}
+macro srl_(d, n) {
+    $(C_flag) = ((d >> (n - 1)) & 1) != 0;
+    d = d >> n;
+    shf(d);
+}
+
+# MUL/MULS rr,src: rr <- rr<low half> x src
+macro mulu8(rr, s) {
+    rr = zext(rr:1) * zext(s);
+}
+macro mulu16(rr, s) {
+    rr = zext(rr:2) * zext(s);
+}
+macro muls8(rr, s) {
+    rr = sext(rr:1) * sext(s);
+}
+macro muls16(rr, s) {
+    rr = sext(rr:2) * sext(s);
+}
+# DIV/DIVS rr,src: rr<low half> <- quotient, rr<high half> <- remainder; V = divide by 0 or overflow
+macro divu8(rr, s) {
+    $(V_flag) = 1;
+    if (s == 0) goto <done>;
+    local q:2 = rr / zext(s);
+    local r:2 = rr % zext(s);
+    $(V_flag) = q > 0xff;
+    rr = (r << 8) | (q & 0xff);
+<done>
+}
+macro divu16(rr, s) {
+    $(V_flag) = 1;
+    if (s == 0) goto <done>;
+    local q:4 = rr / zext(s);
+    local r:4 = rr % zext(s);
+    $(V_flag) = q > 0xffff;
+    rr = (r << 16) | (q & 0xffff);
+<done>
+}
+macro divs8(rr, s) {
+    $(V_flag) = 1;
+    if (s == 0) goto <done>;
+    local q:2 = rr s/ sext(s);
+    local r:2 = rr s% sext(s);
+    $(V_flag) = (q s> 0x7f) || (q s< -0x80);
+    rr = (r << 8) | (q & 0xff);
+<done>
+}
+macro divs16(rr, s) {
+    $(V_flag) = 1;
+    if (s == 0) goto <done>;
+    local q:4 = rr s/ sext(s);
+    local r:4 = rr s% sext(s);
+    $(V_flag) = (q s> 0x7fff) || (q s< -0x8000);
+    rr = (r << 16) | (q & 0xffff);
+<done>
+}
+
+# stack (XSP, maximum mode: PC is pushed as 32 bits)
+macro push8(v)  { XSP = XSP - 1; *:1 XSP = v; }
+macro push16(v) { XSP = XSP - 2; *:2 XSP = v; }
+macro push32(v) { XSP = XSP - 4; *:4 XSP = v; }
+macro pop8(v)   { v = *:1 XSP; XSP = XSP + 1; }
+macro pop16(v)  { v = *:2 XSP; XSP = XSP + 2; }
+macro pop32(v)  { v = *:4 XSP; XSP = XSP + 4; }
+
+# register banks: XWA..XHL hold the current bank; on a bank change they are stored to the old bank
+# and loaded from the new one (RFP2 is fixed at 0 in maximum mode)
+macro store_bank(b) {
+    if (b != 0) goto <b1>;
+    XWA_0 = XWA; XBC_0 = XBC; XDE_0 = XDE; XHL_0 = XHL; goto <end>;
+<b1>
+    if (b != 1) goto <b2>;
+    XWA_1 = XWA; XBC_1 = XBC; XDE_1 = XDE; XHL_1 = XHL; goto <end>;
+<b2>
+    if (b != 2) goto <b3>;
+    XWA_2 = XWA; XBC_2 = XBC; XDE_2 = XDE; XHL_2 = XHL; goto <end>;
+<b3>
+    XWA_3 = XWA; XBC_3 = XBC; XDE_3 = XDE; XHL_3 = XHL;
+<end>
+}
+macro load_bank(b) {
+    if (b != 0) goto <b1>;
+    XWA = XWA_0; XBC = XBC_0; XDE = XDE_0; XHL = XHL_0; goto <end>;
+<b1>
+    if (b != 1) goto <b2>;
+    XWA = XWA_1; XBC = XBC_1; XDE = XDE_1; XHL = XHL_1; goto <end>;
+<b2>
+    if (b != 2) goto <b3>;
+    XWA = XWA_2; XBC = XBC_2; XDE = XDE_2; XHL = XHL_2; goto <end>;
+<b3>
+    XWA = XWA_3; XBC = XBC_3; XDE = XDE_3; XHL = XHL_3;
+<end>
+}
+macro switch_bank(old) {
+    $(RFP) = $(RFP) & 3;
+    if (old == $(RFP)) goto <same>;
+    store_bank(old);
+    load_bank($(RFP));
+<same>
+}

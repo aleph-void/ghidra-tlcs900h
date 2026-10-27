@@ -1,0 +1,121 @@
+
+# ---------------------------------------------------------------------------------------------
+# Register codes (extension byte "r"). Bank registers 0..3 (codes 00H-3FH) and the previous bank
+# (D0H-DFH) live in the current-bank registers while their bank is the current one (RFP), and in
+# the XWA_n... storage otherwise: these codes are resolved at run time against RFP.
+# ---------------------------------------------------------------------------------------------
+
+xrB: xb8 is x_hi<4 & xb8 & x_hi & x_lo {
+    local cur:1 = (x_hi == $(RFP));
+    local off:1 = x_lo + (1 - cur) * (0x50 + x_hi * 0x10);
+    export *[register]:1 off;
+}
+xrB: xb8 is x_hi=0xd & xb8 & x_lo {
+    local p:1 = ($(RFP) - 1) & 3;
+    local off:1 = x_lo + 0x50 + p * 0x10;
+    export *[register]:1 off;
+}
+xrB: xb8 is x_hi>=0xe & xb8 { export xb8; }
+
+xrW: xw7 is x_hi<4 & x_0=0 & xw7 & x_hi & x_lo {
+    local cur:1 = (x_hi == $(RFP));
+    local off:1 = x_lo + (1 - cur) * (0x50 + x_hi * 0x10);
+    export *[register]:2 off;
+}
+xrW: xw7 is x_hi=0xd & x_0=0 & xw7 & x_lo {
+    local p:1 = ($(RFP) - 1) & 3;
+    local off:1 = x_lo + 0x50 + p * 0x10;
+    export *[register]:2 off;
+}
+xrW: xw7 is x_hi>=0xe & x_0=0 & xw7 { export xw7; }
+
+# long register named by the upper six bits (the low two bits are an addressing-mode field)
+xrLm: xl6 is x_hi<4 & xl6 & x_hi & x_lsub {
+    local cur:1 = (x_hi == $(RFP));
+    local off:1 = x_lsub * 4 + (1 - cur) * (0x50 + x_hi * 0x10);
+    export *[register]:4 off;
+}
+xrLm: xl6 is x_hi=0xd & xl6 & x_lsub {
+    local p:1 = ($(RFP) - 1) & 3;
+    local off:1 = x_lsub * 4 + 0x50 + p * 0x10;
+    export *[register]:4 off;
+}
+xrLm: xl6 is x_hi>=0xe & xl6 { export xl6; }
+xrL: xrLm is x_01=0 & xrLm { export xrLm; }
+
+# first-byte register operand "r": C8+zz+r (current bank) or C7+zz followed by a register code.
+# SLEIGH cannot constrain the operation byte after a variable-length operand, so every prefix
+# subtable exists once per length (rB1 = 1 byte, rB2 = 2 bytes, ...) and the instruction
+# constructors are repeated for each length.
+rB1: R8   is op_hi=0xc & op_3=1 & R8  { export R8; }
+rB2: xrB  is op=0xc7 ; xrB            { export xrB; }
+rW1: R16  is op_hi=0xd & op_3=1 & R16 { export R16; }
+rW2: xrW  is op=0xd7 ; xrW            { export xrW; }
+rL1: R32  is op_hi=0xe & op_3=1 & R32 { export R32; }
+rL2: xrL  is op=0xe7 ; xrL            { export xrL; }
+
+# "rr" of MUL/DIV rr,#: the register twice the operand size whose low half is r
+mrB1: RRb is op_hi=0xc & op_3=1 & op_0=1 & RRb { export RRb; }
+mrB2: xrW is op=0xc7 ; xrW                      { export xrW; }
+mrW1: R32 is op_hi=0xd & op_3=1 & R32           { export R32; }
+mrW2: xrL is op=0xd7 ; xrL                      { export xrL; }
+
+# ---------------------------------------------------------------------------------------------
+# Memory operands ("mem", manual: memory addressing mode specify code); eaN exports the address
+# and is N bytes long. The sign-bit splits keep every pattern N bytes wide.
+# ---------------------------------------------------------------------------------------------
+
+@@EA@@
+
+# absolute operands that follow the operation byte
+n8a:  imm8  is imm8  { export *[const]:4 imm8; }
+n16a: imm16 is imm16 { export *[const]:4 imm16; }
+
+rel8:  reloc is simm8  [ reloc = inst_next + simm8; ]  { export *:4 reloc; }
+rel16: reloc is simm16 [ reloc = inst_next + simm16; ] { export *:4 reloc; }
+
+cc: "F"   is op_cc=0x0 { c:1 = 0; export c; }
+cc: "LT"  is op_cc=0x1 { c:1 = ($(S_flag) ^ $(V_flag)); export c; }
+cc: "LE"  is op_cc=0x2 { c:1 = ($(Z_flag) | ($(S_flag) ^ $(V_flag))); export c; }
+cc: "ULE" is op_cc=0x3 { c:1 = ($(C_flag) | $(Z_flag)); export c; }
+cc: "OV"  is op_cc=0x4 { c:1 = $(V_flag); export c; }
+cc: "MI"  is op_cc=0x5 { c:1 = $(S_flag); export c; }
+cc: "Z"   is op_cc=0x6 { c:1 = $(Z_flag); export c; }
+cc: "C"   is op_cc=0x7 { c:1 = $(C_flag); export c; }
+cc: "T"   is op_cc=0x8 { c:1 = 1; export c; }
+cc: "GE"  is op_cc=0x9 { c:1 = ($(S_flag) ^ $(V_flag)) == 0; export c; }
+cc: "GT"  is op_cc=0xa { c:1 = ($(Z_flag) | ($(S_flag) ^ $(V_flag))) == 0; export c; }
+cc: "UGT" is op_cc=0xb { c:1 = ($(C_flag) | $(Z_flag)) == 0; export c; }
+cc: "NOV" is op_cc=0xc { c:1 = $(V_flag) == 0; export c; }
+cc: "PL"  is op_cc=0xd { c:1 = $(S_flag) == 0; export c; }
+cc: "NZ"  is op_cc=0xe { c:1 = $(Z_flag) == 0; export c; }
+cc: "NC"  is op_cc=0xf { c:1 = $(C_flag) == 0; export c; }
+
+# control registers (LDC)
+crB: "DMAM0" is x=0x22 { export DMAM_0; }
+crB: "DMAM1" is x=0x26 { export DMAM_1; }
+crB: "DMAM2" is x=0x2a { export DMAM_2; }
+crB: "DMAM3" is x=0x2e { export DMAM_3; }
+crW: "DMAC0" is x=0x20 { export DMAC_0; }
+crW: "DMAC1" is x=0x24 { export DMAC_1; }
+crW: "DMAC2" is x=0x28 { export DMAC_2; }
+crW: "DMAC3" is x=0x2c { export DMAC_3; }
+crW: "INTNEST" is x=0x3c { export INTNEST; }
+crL: "DMAS0" is x=0x00 { export DMAS_0; }
+crL: "DMAS1" is x=0x04 { export DMAS_1; }
+crL: "DMAS2" is x=0x08 { export DMAS_2; }
+crL: "DMAS3" is x=0x0c { export DMAS_3; }
+crL: "DMAD0" is x=0x10 { export DMAD_0; }
+crL: "DMAD1" is x=0x14 { export DMAD_1; }
+crL: "DMAD2" is x=0x18 { export DMAD_2; }
+crL: "DMAD3" is x=0x1c { export DMAD_3; }
+
+# #3 of INC/DEC: object code 0 means 8
+n3: "8"  is imm3=0 { export 8:1; }
+n3: imm3 is imm3   { export *[const]:1 imm3; }
+# #4 of shifts and rotates: 0 means 16
+n4: "16" is imm8_hi=0 & imm4=0 { export 16:1; }
+n4: imm4 is imm8_hi=0 & imm4   { export *[const]:1 imm4; }
+# bit number #4 (bit operations on registers; 0..7 for a byte register)
+bn3: imm3d is d8_37=0 & imm3d { export *[const]:1 imm3d; }
+b4: imm4 is imm8_hi=0 & imm4 { export *[const]:1 imm4; }

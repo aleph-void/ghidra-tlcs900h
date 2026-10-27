@@ -1,0 +1,140 @@
+# TLCS-900/H sleigh include file
+#
+# Encodings and operation follow the Toshiba TLCS-900 CPU manual (900, 900/L, 900/H core book,
+# "Appendix B Instruction Lists" and "Appendix C Instruction Code Maps"). An instruction is a
+# first byte (an addressing prefix: register, memory operand or one-byte op code), the extension
+# bytes of that prefix, then the operation byte and its immediate data. The prefixes are the
+# variable-length subtables rB/rW/rL (register "r"), smB/smW/smL (source memory) and dmA
+# (destination memory, an effective address).
+
+define pcodeop halt;
+
+define token opbyte (8)
+   op     = (0,7)
+   op_hi  = (4,7)
+   op_lo  = (0,3)
+   op_cc  = (0,3)
+   op_r   = (0,2)
+   op_0   = (0,0)
+   op_3   = (3,3)
+   op_sz  = (4,5)
+   op_6   = (6,6)
+   op_7   = (7,7)
+   R8     = (0,2)
+   R16    = (0,2)
+   R32    = (0,2)
+   RRb    = (1,2)
+   imm3   = (0,2)
+;
+
+define token extbyte (8)
+   x      = (0,7)
+   x_hi   = (4,7)
+   x_lo   = (0,3)
+   x_zz   = (0,1)
+   x_0    = (0,0)
+   x_01   = (0,1)
+   xb8    = (0,7)
+   xw7    = (1,7)
+   xl6    = (2,7)
+   x_wsub = (1,3)
+   x_lsub = (2,3)
+   x_7    = (7,7)
+   xa     = (0,7)
+   xb     = (0,7)
+   xc     = (0,7)
+   xs     = (0,7) signed
+   xbs    = (0,7) signed
+;
+
+define token extbyte2 (8)
+   y_hi   = (4,7)
+   y_lo   = (0,3)
+   y_0    = (0,0)
+   yb8    = (0,7)
+   yw7    = (1,7)
+;
+
+define token data8 (8)
+   imm8  = (0,7)
+   simm8 = (0,7) signed
+   imm4  = (0,3)
+   imm8_hi = (4,7)
+   d8_37 = (3,7)
+   imm3d = (0,2)
+   d8s   = (7,7)
+;
+define token data16 (16)
+   imm16  = (0,15)
+   simm16 = (0,15) signed
+   d16s   = (15,15)
+;
+define token data24 (24)
+   imm24 = (0,23)
+   d24s  = (23,23)
+;
+define token data32 (32)
+   imm32 = (0,31)
+;
+
+attach variables [ R32 ] [ XWA XBC XDE XHL XIX XIY XIZ XSP ];
+attach variables [ R16 ] [ WA BC DE HL IX IY IZ SP ];
+attach variables [ R8  ] [ W A B C D E H L ];
+attach variables [ RRb ] [ WA BC DE HL ];
+attach variables [ xb8 yb8 ] [
+    RA_0    RW_0    QA_0    QW_0    RC_0    RB_0    QC_0    QB_0    RE_0    RD_0    QE_0    QD_0    RL_0    RH_0    QL_0    QH_0   
+    RA_1    RW_1    QA_1    QW_1    RC_1    RB_1    QC_1    QB_1    RE_1    RD_1    QE_1    QD_1    RL_1    RH_1    QL_1    QH_1   
+    RA_2    RW_2    QA_2    QW_2    RC_2    RB_2    QC_2    QB_2    RE_2    RD_2    QE_2    QD_2    RL_2    RH_2    QL_2    QH_2   
+    RA_3    RW_3    QA_3    QW_3    RC_3    RB_3    QC_3    QB_3    RE_3    RD_3    QE_3    QD_3    RL_3    RH_3    QL_3    QH_3   
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _       _       _       _       _       _       _       _       _      
+    RA_P    RW_P    QA_P    QW_P    RC_P    RB_P    QC_P    QB_P    RE_P    RD_P    QE_P    QD_P    RL_P    RH_P    QL_P    QH_P   
+    A       W       QA      QW      C       B       QC      QB      E       D       QE      QD      L       H       QL      QH     
+    IXL     IXH     QIXL    QIXH    IYL     IYH     QIYL    QIYH    IZL     IZH     QIZL    QIZH    SPL     SPH     QSPL    QSPH   
+];
+
+attach variables [ xw7 yw7 ] [
+    RWA_0   QWA_0   RBC_0   QBC_0   RDE_0   QDE_0   RHL_0   QHL_0  
+    RWA_1   QWA_1   RBC_1   QBC_1   RDE_1   QDE_1   RHL_1   QHL_1  
+    RWA_2   QWA_2   RBC_2   QBC_2   RDE_2   QDE_2   RHL_2   QHL_2  
+    RWA_3   QWA_3   RBC_3   QBC_3   RDE_3   QDE_3   RHL_3   QHL_3  
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    _       _       _       _       _       _       _       _      
+    RWA_P   QWA_P   RBC_P   QBC_P   RDE_P   QDE_P   RHL_P   QHL_P  
+    WA      QWA     BC      QBC     DE      QDE     HL      QHL    
+    IX      QIX     IY      QIY     IZ      QIZ     SP      QSP    
+];
+
+attach variables [ xl6 ] [
+    XWA_0   XBC_0   XDE_0   XHL_0  
+    XWA_1   XBC_1   XDE_1   XHL_1  
+    XWA_2   XBC_2   XDE_2   XHL_2  
+    XWA_3   XBC_3   XDE_3   XHL_3  
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    _       _       _       _      
+    XWA_P   XBC_P   XDE_P   XHL_P  
+    XWA     XBC     XDE     XHL    
+    XIX     XIY     XIZ     XSP    
+];
+

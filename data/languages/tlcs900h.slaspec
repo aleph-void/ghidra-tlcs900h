@@ -30,8 +30,8 @@ define register offset=0x80 size=1 [ RA_3 RW_3 QA_3 QW_3 RC_3 RB_3 QC_3 QB_3 RE_
 define register offset=0x90 size=4 [ DMAS_0 DMAS_1 DMAS_2 DMAS_3 DMAD_0 DMAD_1 DMAD_2 DMAD_3 ];
 define register offset=0xa0 size=2 [ DMAC_0 DMAC_1 DMAC_2 DMAC_3 ];
 define register offset=0xb0 size=1 [ DMAM_0 DMAM_1 DMAM_2 DMAM_3 ];
-define register offset=0xb8 size=4 [ XNSP ];
-define register offset=0xb8 size=2 [ NSP _ ];
+# Interrupt nesting counter (900/L, 900/H; control register 3CH, which is XNSP on the 900 core)
+define register offset=0xb8 size=2 [ INTNEST ];
 # Status Register
 define register offset=0xbc size=2 [ SR ];
 # Flag Register
