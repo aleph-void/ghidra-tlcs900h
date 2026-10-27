@@ -159,10 +159,11 @@ for z, d in S.items():
         c('    $(V_flag) = ((a ^ r) & (p ^ r)) s< 0; resSZ(r);')
         c('    mrW = r; XHL = XHL - 2;')
         c('}')
+        # MINCn/MDECn #,r: the operand is encoded as # - n (manual: D8+r :38:#-1, :39:#-2, :3A:#-4, ...)
         for k, step in ((0x38, 1), (0x39, 2), (0x3a, 4)):
-            c(f':minc{step} modv,rW is (op_7=1 & rW) ... ; op=0x{k:02x} ; imm16 [ modv = imm16 + 1; ] {{ local m:2 = imm16; if ((rW & m) == (m + 1 - {step})) goto <wrap>; rW = rW + {step}; goto inst_next; <wrap> rW = rW - (m + 1 - {step}); }}')
+            c(f':minc{step} modv,rW is (op_7=1 & rW) ... ; op=0x{k:02x} ; imm16 [ modv = imm16 + {step}; ] {{ local m:2 = imm16 + {step - 1}; if ((rW & m) == (m + 1 - {step})) goto <wrap>; rW = rW + {step}; goto inst_next; <wrap> rW = rW - (m + 1 - {step}); }}')
         for k, step in ((0x3c, 1), (0x3d, 2), (0x3e, 4)):
-            c(f':mdec{step} modv,rW is (op_7=1 & rW) ... ; op=0x{k:02x} ; imm16 [ modv = imm16 + 1; ] {{ local m:2 = imm16; if ((rW & m) == 0) goto <wrap>; rW = rW - {step}; goto inst_next; <wrap> rW = rW + (m + 1 - {step}); }}')
+            c(f':mdec{step} modv,rW is (op_7=1 & rW) ... ; op=0x{k:02x} ; imm16 [ modv = imm16 + {step}; ] {{ local m:2 = imm16 + {step - 1}; if ((rW & m) == 0) goto <wrap>; rW = rW - {step}; goto inst_next; <wrap> rW = rW + (m + 1 - {step}); }}')
         c(':ldc crW,rW  is (op_7=1 & rW) ... ; op=0x2e ; crW { crW = rW; }')
         c(':ldc rW,crW  is (op_7=1 & rW) ... ; op=0x2f ; crW { rW = crW; }')
     if z == 'L':

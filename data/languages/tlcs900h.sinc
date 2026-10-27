@@ -895,18 +895,18 @@ z0c: is x=0 { }
     $(V_flag) = ((a ^ r) & (p ^ r)) s< 0; resSZ(r);
     mrW2 = r; XHL = XHL - 2;
 }
-:minc1 modv,rW1 is rW1 ; op=0x38 ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW1 & m) == (m + 1 - 1)) goto <wrap>; rW1 = rW1 + 1; goto inst_next; <wrap> rW1 = rW1 - (m + 1 - 1); }
-:minc1 modv,rW2 is rW2 ; op=0x38 ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW2 & m) == (m + 1 - 1)) goto <wrap>; rW2 = rW2 + 1; goto inst_next; <wrap> rW2 = rW2 - (m + 1 - 1); }
-:minc2 modv,rW1 is rW1 ; op=0x39 ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW1 & m) == (m + 1 - 2)) goto <wrap>; rW1 = rW1 + 2; goto inst_next; <wrap> rW1 = rW1 - (m + 1 - 2); }
-:minc2 modv,rW2 is rW2 ; op=0x39 ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW2 & m) == (m + 1 - 2)) goto <wrap>; rW2 = rW2 + 2; goto inst_next; <wrap> rW2 = rW2 - (m + 1 - 2); }
-:minc4 modv,rW1 is rW1 ; op=0x3a ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW1 & m) == (m + 1 - 4)) goto <wrap>; rW1 = rW1 + 4; goto inst_next; <wrap> rW1 = rW1 - (m + 1 - 4); }
-:minc4 modv,rW2 is rW2 ; op=0x3a ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW2 & m) == (m + 1 - 4)) goto <wrap>; rW2 = rW2 + 4; goto inst_next; <wrap> rW2 = rW2 - (m + 1 - 4); }
-:mdec1 modv,rW1 is rW1 ; op=0x3c ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW1 & m) == 0) goto <wrap>; rW1 = rW1 - 1; goto inst_next; <wrap> rW1 = rW1 + (m + 1 - 1); }
-:mdec1 modv,rW2 is rW2 ; op=0x3c ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW2 & m) == 0) goto <wrap>; rW2 = rW2 - 1; goto inst_next; <wrap> rW2 = rW2 + (m + 1 - 1); }
-:mdec2 modv,rW1 is rW1 ; op=0x3d ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW1 & m) == 0) goto <wrap>; rW1 = rW1 - 2; goto inst_next; <wrap> rW1 = rW1 + (m + 1 - 2); }
-:mdec2 modv,rW2 is rW2 ; op=0x3d ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW2 & m) == 0) goto <wrap>; rW2 = rW2 - 2; goto inst_next; <wrap> rW2 = rW2 + (m + 1 - 2); }
-:mdec4 modv,rW1 is rW1 ; op=0x3e ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW1 & m) == 0) goto <wrap>; rW1 = rW1 - 4; goto inst_next; <wrap> rW1 = rW1 + (m + 1 - 4); }
-:mdec4 modv,rW2 is rW2 ; op=0x3e ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16; if ((rW2 & m) == 0) goto <wrap>; rW2 = rW2 - 4; goto inst_next; <wrap> rW2 = rW2 + (m + 1 - 4); }
+:minc1 modv,rW1 is rW1 ; op=0x38 ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16 + 0; if ((rW1 & m) == (m + 1 - 1)) goto <wrap>; rW1 = rW1 + 1; goto inst_next; <wrap> rW1 = rW1 - (m + 1 - 1); }
+:minc1 modv,rW2 is rW2 ; op=0x38 ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16 + 0; if ((rW2 & m) == (m + 1 - 1)) goto <wrap>; rW2 = rW2 + 1; goto inst_next; <wrap> rW2 = rW2 - (m + 1 - 1); }
+:minc2 modv,rW1 is rW1 ; op=0x39 ; imm16 [ modv = imm16 + 2; ] { local m:2 = imm16 + 1; if ((rW1 & m) == (m + 1 - 2)) goto <wrap>; rW1 = rW1 + 2; goto inst_next; <wrap> rW1 = rW1 - (m + 1 - 2); }
+:minc2 modv,rW2 is rW2 ; op=0x39 ; imm16 [ modv = imm16 + 2; ] { local m:2 = imm16 + 1; if ((rW2 & m) == (m + 1 - 2)) goto <wrap>; rW2 = rW2 + 2; goto inst_next; <wrap> rW2 = rW2 - (m + 1 - 2); }
+:minc4 modv,rW1 is rW1 ; op=0x3a ; imm16 [ modv = imm16 + 4; ] { local m:2 = imm16 + 3; if ((rW1 & m) == (m + 1 - 4)) goto <wrap>; rW1 = rW1 + 4; goto inst_next; <wrap> rW1 = rW1 - (m + 1 - 4); }
+:minc4 modv,rW2 is rW2 ; op=0x3a ; imm16 [ modv = imm16 + 4; ] { local m:2 = imm16 + 3; if ((rW2 & m) == (m + 1 - 4)) goto <wrap>; rW2 = rW2 + 4; goto inst_next; <wrap> rW2 = rW2 - (m + 1 - 4); }
+:mdec1 modv,rW1 is rW1 ; op=0x3c ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16 + 0; if ((rW1 & m) == 0) goto <wrap>; rW1 = rW1 - 1; goto inst_next; <wrap> rW1 = rW1 + (m + 1 - 1); }
+:mdec1 modv,rW2 is rW2 ; op=0x3c ; imm16 [ modv = imm16 + 1; ] { local m:2 = imm16 + 0; if ((rW2 & m) == 0) goto <wrap>; rW2 = rW2 - 1; goto inst_next; <wrap> rW2 = rW2 + (m + 1 - 1); }
+:mdec2 modv,rW1 is rW1 ; op=0x3d ; imm16 [ modv = imm16 + 2; ] { local m:2 = imm16 + 1; if ((rW1 & m) == 0) goto <wrap>; rW1 = rW1 - 2; goto inst_next; <wrap> rW1 = rW1 + (m + 1 - 2); }
+:mdec2 modv,rW2 is rW2 ; op=0x3d ; imm16 [ modv = imm16 + 2; ] { local m:2 = imm16 + 1; if ((rW2 & m) == 0) goto <wrap>; rW2 = rW2 - 2; goto inst_next; <wrap> rW2 = rW2 + (m + 1 - 2); }
+:mdec4 modv,rW1 is rW1 ; op=0x3e ; imm16 [ modv = imm16 + 4; ] { local m:2 = imm16 + 3; if ((rW1 & m) == 0) goto <wrap>; rW1 = rW1 - 4; goto inst_next; <wrap> rW1 = rW1 + (m + 1 - 4); }
+:mdec4 modv,rW2 is rW2 ; op=0x3e ; imm16 [ modv = imm16 + 4; ] { local m:2 = imm16 + 3; if ((rW2 & m) == 0) goto <wrap>; rW2 = rW2 - 4; goto inst_next; <wrap> rW2 = rW2 + (m + 1 - 4); }
 :ldc crW,rW1  is rW1 ; op=0x2e ; crW { crW = rW1; }
 :ldc crW,rW2  is rW2 ; op=0x2e ; crW { crW = rW2; }
 :ldc rW1,crW  is rW1 ; op=0x2f ; crW { rW1 = crW; }
