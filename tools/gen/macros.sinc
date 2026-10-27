@@ -11,25 +11,28 @@ macro parityV(r) {
     local pc:1 = popcount(r);
     $(V_flag) = (pc & 1) == 0;
 }
-# ADD/ADC: S Z H V, N=0, C
+# ADD/ADC: S Z H V, N=0, C. cin=1 adds the carry flag (ADC). Without a carry-in the flags use
+# scarry/carry so that the decompiler recognises the comparisons.
 macro addf(a, b, cin, dst) {
+    local ci:1 = cin;
     local c = a;
-    c = zext($(C_flag) & cin);
+    c = zext($(C_flag) & ci);
     local r = a + b + c;
     $(H_flag) = ((a ^ b ^ r) & 0x10) != 0;
-    $(V_flag) = ((a ^ r) & (b ^ r)) s< 0;
+    $(V_flag) = (scarry(a, b) && (ci == 0)) || ((((a ^ r) & (b ^ r)) s< 0) && (ci != 0));
     $(C_flag) = carry(a, b) || carry(a + b, c);
     $(N_flag) = 0;
     resSZ(r);
     dst = r;
 }
-# SUB/SBC/CP/NEG: S Z H V, N=1, C (borrow)
+# SUB/SBC/CP/NEG: S Z H V, N=1, C (borrow); cin=1 subtracts the carry flag (SBC)
 macro subf(a, b, cin, dst) {
+    local ci:1 = cin;
     local c = a;
-    c = zext($(C_flag) & cin);
+    c = zext($(C_flag) & ci);
     local r = a - b - c;
     $(H_flag) = ((a ^ b ^ r) & 0x10) != 0;
-    $(V_flag) = ((a ^ b) & (a ^ r)) s< 0;
+    $(V_flag) = (sborrow(a, b) && (ci == 0)) || ((((a ^ b) & (a ^ r)) s< 0) && (ci != 0));
     $(C_flag) = (a < b) || ((a - b) < c);
     $(N_flag) = 1;
     resSZ(r);
@@ -171,6 +174,15 @@ macro divs16(rr, s) {
     $(V_flag) = (q s> 0x7fff) || (q s< -0x8000);
     rr = (r << 16) | (q & 0xffff);
 <done>
+}
+
+# F (= SR<7:0>) <-> the flag registers
+macro packF() {
+    F = (SF << 7) | (ZF << 6) | (HF << 4) | (VF << 2) | (NF << 1) | CF;
+}
+macro unpackF() {
+    SF = (F >> 7) & 1; ZF = (F >> 6) & 1; HF = (F >> 4) & 1;
+    VF = (F >> 2) & 1; NF = (F >> 1) & 1; CF = F & 1;
 }
 
 # stack (XSP, maximum mode: PC is pushed as 32 bits)

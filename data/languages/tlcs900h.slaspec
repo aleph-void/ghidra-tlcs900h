@@ -39,12 +39,15 @@ define register offset=0xbc size=1 [ F _ ];
 # Inverse Flag Register
 define register offset=0xbe size=1 [ F_I ];
 
-@define C_flag "SR[0,1]" # Carry
-@define N_flag "SR[1,1]" # Add/Subtract
-@define V_flag "SR[2,1]" # Parity/Overflow
-@define H_flag "SR[4,1]" # Half Carry
-@define Z_flag "SR[6,1]" # Zero
-@define S_flag "SR[7,1]" # Sign
+# Flags: kept in their own registers (the decompiler cannot follow conditions on bits of SR) and
+# packed into F (the low byte of SR) by PUSH SR/F, POP SR/F, EX F,F', SWI and RETI
+define register offset=0xc0 size=1 [ SF ZF HF VF NF CF ];
+@define C_flag "CF" # Carry
+@define N_flag "NF" # Add/Subtract
+@define V_flag "VF" # Parity/Overflow
+@define H_flag "HF" # Half Carry
+@define Z_flag "ZF" # Zero
+@define S_flag "SF" # Sign
 
 @define RFP  "SR[8,3]"  # File Pointer
 @define MAX  "SR[11,1]" # Maximum Mode
